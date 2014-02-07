@@ -24,6 +24,13 @@ class BulkOperationsTest < Test::Unit::TestCase
     [c1, c2].each {|c| assert_false c.new_record? }
   end
 
+  can "create multiple contacts at once when passed invoices" do
+    c1 = @client.Contact.build(name: random_name)
+    c2 = @client.Contact.build(name: random_name)
+    assert_true @client.Contact.batch_create([c1,c2])
+    [c1, c2].each {|c| assert_false c.new_record? }
+  end
+
   can "create and update new records in bulk" do
     c1, c2 = nil, nil
     assert_true(

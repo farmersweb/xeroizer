@@ -140,6 +140,38 @@ module Xeroizer
           result
         end
 
+        def batch_create(records, batch_size)
+          no_errors = true
+          @allow_batch_operations = true
+          @objects = {}
+
+          records.each do |record|
+            @objects[model_class] ||= {}
+            @objects[model_class][record.object_id] ||= record
+          end
+
+          actions = records.group_by {|r| r.new_record? ? :http_put : :http_post}
+          actions.each_pair do |http_method, records|
+            records.each_slice(batch_size) do |some_records|
+              request = to_bulk_xml(some_records)
+              response = parse_response(self.send(http_method, request, {:summarizeErrors => false}))
+              response.response_items.each_with_index do |record, i|
+                if record and record.is_a?(model_class)
+                  some_records[i].attributes = record.non_calculated_attributes
+                  some_records[i].errors = record.errors
+                  no_errors = record.errors.blank? if no_errors
+                  some_records[i].saved!
+                end
+              end
+            end
+          end
+
+          
+          @objects = {}
+          @allow_batch_operations = false
+          no_errors
+        end
+
         def batch_save(chunk_size = DEFAULT_RECORDS_PER_BATCH_SAVE)
           no_errors = true
           @objects = {}
