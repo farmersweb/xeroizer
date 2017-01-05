@@ -6,26 +6,36 @@ module Xeroizer
     include Http
     extend Record::ApplicationHelper
 
-    attr_reader :client, :xero_url, :logger, :rate_limit_sleep, :rate_limit_max_attempts
+    attr_reader :client, :xero_url, :logger, :rate_limit_sleep, :rate_limit_max_attempts,
+                :default_headers, :unitdp, :before_request, :after_request, :nonce_used_max_attempts
 
     extend Forwardable
     def_delegators :client, :access_token
 
     record :Account
+    record :Allocation
     record :Attachment
     record :BrandingTheme
     record :Contact
+    record :ContactGroup
     record :CreditNote
     record :Currency
     record :Employee
+    record :ExpenseClaim
     record :Invoice
     record :Item
     record :Journal
     record :ManualJournal
     record :Organisation
     record :Payment
+    record :Prepayment
+    record :PurchaseOrder
+    record :Receipt
+    record :RepeatingInvoice
+    record :Schedule
     record :TaxRate
     record :TrackingCategory
+    record :TrackingCategoryChild
     record :BankTransaction
     record :User
 
@@ -49,8 +59,13 @@ module Xeroizer
         @xero_url = options[:xero_url] || "https://api.xero.com/api.xro/2.0"
         @rate_limit_sleep = options[:rate_limit_sleep] || false
         @rate_limit_max_attempts = options[:rate_limit_max_attempts] || 5
-        @client   = OAuth.new(consumer_key, consumer_secret, options)
+        @nonce_used_max_attempts = options[:nonce_used_max_attempts] || 1
+        @default_headers = options[:default_headers] || {}
+        @before_request = options.delete(:before_request)
+        @after_request = options.delete(:after_request)
+        @client = OAuth.new(consumer_key, consumer_secret, options.merge({default_headers: default_headers}))
         @logger = options[:logger] || false
+        @unitdp = options[:unitdp] || 2
       end
 
   end
