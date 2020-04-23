@@ -123,7 +123,7 @@ module Xeroizer
         when 400
           raise Xeroizer::BadResponse.new(description)
         when 401
-          raise OAuth::TokenExpired.new(description) if description.include?("TokenExpired")
+          raise OAuth::TokenExpired.new(description) if description and description.include?("TokenExpired")
           raise OAuth::TokenInvalid.new(description)
         when 403
           message = "Possible xero-tenant-id header issue. Xero Error: #{description}"
